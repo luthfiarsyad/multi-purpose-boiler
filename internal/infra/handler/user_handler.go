@@ -22,6 +22,16 @@ func NewUserHandler(us service.UserService) *UserHandler {
 	return &UserHandler{userService: us}
 }
 
+// CreateUser handles creating a new user
+// @Summary Create a new user
+// @Description Create a new user with name and email
+// @Tags Users
+// @Accept  json
+// @Produce  json
+// @Param request body domain.CreateUserRequest true "User Data"
+// @Success 201 {object} domain.Response
+// @Failure 400 {object} domain.Response
+// @Router /users [post]
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	// Use Gin's request context and add required values
 	ctx := c.Request.Context()
@@ -91,6 +101,16 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	})
 }
 
+// GetUser handles fetching a user by ID
+// @Summary Get user by ID
+// @Description Retrieve user details by ID
+// @Tags Users
+// @Accept  json
+// @Produce  json
+// @Param id path int true "User ID"
+// @Success 200 {object} domain.Response
+// @Failure 404 {object} domain.Response
+// @Router /users/{id} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
 	// Use Gin's request context
 	ctx := c.Request.Context()

@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+// @title Base App
+// @version 1.0
+// @description This is a simple App for multi-purpose
+// @host localhost:8080
+// @BasePath /
+// @schemes http
 func main() {
 	// Inisialisasi logger sebelum server
 	logger.Init()
