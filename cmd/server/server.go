@@ -11,7 +11,7 @@ import (
 
 func GetServer() *http.Server {
 	config.LoadConfig()
-	r := routes.InitRouting()
+	r := routes.InitRouting(config.AppConfig.GinMode)
 
 	readTimeout, err := time.ParseDuration(config.AppConfig.ReadTimeout)
 	if err != nil {
