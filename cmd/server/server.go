@@ -10,8 +10,8 @@ import (
 )
 
 func GetServer() *http.Server {
-	r := routes.InitRouting()
 	config.LoadConfig()
+	r := routes.InitRouting()
 
 	readTimeout, err := time.ParseDuration(config.AppConfig.ReadTimeout)
 	if err != nil {

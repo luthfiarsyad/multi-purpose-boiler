@@ -1,15 +1,24 @@
 package logger
 
 import (
+	"context"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog"
 )
 
-// Logger adalah instance global zerolog.Logger
+type logKey string
+
+const (
+	TransactionIDKey logKey = "transaction_id"
+	StartTimeKey     logKey = "start_time"
+)
+
+// Logger instance
 var Logger zerolog.Logger
 
-// Init menginisialisasi logger dengan konfigurasi JSON
+// Init initializes the logger with JSON format
 func Init() {
 	Logger = zerolog.New(os.Stdout).
 		With().
@@ -20,31 +29,71 @@ func Init() {
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 }
 
-// LogEvent adalah struktur untuk logging terstruktur
+// LogEvent defines structured logging event
 type LogEvent struct {
-	Level         string
-	HTTPStatus    int
-	Message       string
-	TransactionID string
-	Data          interface{}
+	Level         string      `json:"level"`
+	HTTPStatus    int         `json:"http_status"`
+	Message       string      `json:"message"`
+	TransactionID string      `json:"transaction_id,omitempty"`
+	LogPoint      string      `json:"log_point,omitempty"`
+	Data          interface{} `json:"data,omitempty"`
 }
 
-// LogInfo mencetak log dengan level INFO
-func LogInfo(event LogEvent) {
+// LogInfo logs information messages using context
+func LogInfo(ctx context.Context, event LogEvent) {
+	transactionID, _ := ctx.Value(TransactionIDKey).(string)
+
+	startTime, _ := ctx.Value(StartTimeKey).(time.Time)
+	processTime := time.Since(startTime).Milliseconds()
+
 	Logger.Info().
-		Str("level", event.Level).
+		Str("transaction_id", transactionID).
 		Int("http_status", event.HTTPStatus).
+		Interface("data", event.Data).
+		Int64("process_time_ms", processTime).
+		Msg(event.Message)
+}
+
+// LogError logs error messages using context
+func LogError(ctx context.Context, event LogEvent, err error) {
+	transactionID, _ := ctx.Value(TransactionIDKey).(string)
+
+	startTime, _ := ctx.Value(StartTimeKey).(time.Time)
+	processTime := time.Since(startTime).Milliseconds()
+
+	Logger.Error().
+		Str("transaction_id", transactionID).
+		Int("http_status", event.HTTPStatus).
+		Interface("data", event.Data).
+		Int64("process_time_ms", processTime).
+		Err(err).
+		Msg(event.Message)
+}
+
+// LogInfoNoCtx logs information messages without context (for main.go)
+func LogInfoNoCtx(event LogEvent) {
+	if event.TransactionID == "" {
+		event.TransactionID = "" // Ensure empty string if not provided
+	}
+
+	Logger.Info().
 		Str("transaction_id", event.TransactionID).
+		Str("log_point", event.LogPoint).
+		Int("http_status", event.HTTPStatus).
 		Interface("data", event.Data).
 		Msg(event.Message)
 }
 
-// LogError mencetak log dengan level ERROR
-func LogError(event LogEvent, err error) {
+// LogErrorNoCtx logs error messages without context (for main.go)
+func LogErrorNoCtx(event LogEvent, err error) {
+	if event.TransactionID == "" {
+		event.TransactionID = "" // Ensure empty string if not provided
+	}
+
 	Logger.Error().
-		Str("level", event.Level).
-		Int("http_status", event.HTTPStatus).
 		Str("transaction_id", event.TransactionID).
+		Str("log_point", event.LogPoint).
+		Int("http_status", event.HTTPStatus).
 		Interface("data", event.Data).
 		Err(err).
 		Msg(event.Message)
