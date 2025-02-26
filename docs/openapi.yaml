@@ -1,0 +1,81 @@
+openapi: 3.0.0
+info:
+  contact: {}
+  description: This is a simple App for multi-purpose
+  title: Base App
+  version: "1.0"
+paths:
+  /users:
+    post:
+      description: Create a new user with name and email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/domain.CreateUserRequest"
+        description: User Data
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/domain.Response"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/domain.Response"
+      summary: Create a new user
+      tags:
+        - Users
+  "/users/{id}":
+    get:
+      description: Retrieve user details by ID
+      parameters:
+        - description: User ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/domain.Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/domain.Response"
+      summary: Get user by ID
+      tags:
+        - Users
+servers:
+  - url: http://localhost:8080
+components:
+  schemas:
+    domain.CreateUserRequest:
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+      required:
+        - email
+        - name
+      type: object
+    domain.Response:
+      properties:
+        data: {}
+        message:
+          type: string
+        status:
+          type: integer
+      type: object
