@@ -1,5 +1,3 @@
-Markdown
-
 # Multi-Purpose Boilerplate for Go
 
 This project is a multi-purpose boilerplate designed to jumpstart your Go development. If you're tired of setting up the same basic configurations for every new project, this boilerplate is for you! It provides a solid foundation with essential features already implemented, so you can focus on building your application logic.
@@ -7,7 +5,7 @@ This project is a multi-purpose boilerplate designed to jumpstart your Go develo
 ## Features
 
 - **Routing:** Uses Gin for fast and efficient routing. Includes example routes for user creation (`POST /users`) and retrieval (`GET /users/:id`).
-- **Dependency Injection:** Uses `wire` for dependency injection, promoting clean and testable code. `InitWiring()` function sets up the dependencies.
+- **Dependency Injection:** Uses `wire` for clean, testable code. The `InitWiring()` function sets up dependencies for each layer, and this pattern can be applied to improve your API.
 - **Configuration:** Leverages Viper for flexible configuration management.
 - **Logging:** Implements structured logging with Zerolog for easy debugging and monitoring.
 - **Error Handling:** Includes robust error handling to gracefully manage unexpected situations.
