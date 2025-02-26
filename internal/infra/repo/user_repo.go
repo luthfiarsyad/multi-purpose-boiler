@@ -58,17 +58,17 @@ func (r *userRepo) GetUserByID(ctx context.Context, id uint) (*domain.GetUserRes
 	query := `SELECT id, name, email FROM users WHERE id = ?`
 	err := r.DB.WithContext(ctx).Raw(query, id).Scan(&user).Error
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		logger.LogInfo(ctx, logger.LogEvent{
-			HTTPStatus: 404,
-			Message:    "User not found",
-			Data:       id,
-			LogPoint:   "database-response",
-		})
-		return nil, ErrUserNotFound // Return custom error
-	}
-
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.LogInfo(ctx, logger.LogEvent{
+				HTTPStatus: 404,
+				Message:    "User not found",
+				Data:       id,
+				LogPoint:   "database-response",
+			})
+			return nil, ErrUserNotFound // Return custom error
+		}
+
 		logger.LogError(ctx, logger.LogEvent{
 			HTTPStatus: 500,
 			Message:    "Failed to fetch user",
@@ -78,11 +78,23 @@ func (r *userRepo) GetUserByID(ctx context.Context, id uint) (*domain.GetUserRes
 		return nil, err
 	}
 
+	// Check if the user data is still the zero value
+	if user.ID == 0 {
+		logger.LogInfo(ctx, logger.LogEvent{
+			HTTPStatus: 404,
+			Message:    "User not found",
+			Data:       id,
+			LogPoint:   "database-response",
+		})
+		return nil, ErrUserNotFound // Return custom error
+	}
+
 	logger.LogInfo(ctx, logger.LogEvent{
 		HTTPStatus: 200,
 		Message:    "User fetched successfully",
 		Data:       user,
 		LogPoint:   "database-response",
 	})
+
 	return &user, nil
 }
