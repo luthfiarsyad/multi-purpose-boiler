@@ -2,9 +2,11 @@ package handler
 
 import (
 	"base-app/internal/domain"
+	"base-app/internal/infra/repo"
 	"base-app/internal/service"
 	"base-app/pkg/logger"
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -121,8 +123,24 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		return
 	}
 
+	// Call service layer
 	user, err := h.userService.GetUserByID(ctx, uint(userId))
 	if err != nil {
+		// Handle user not found scenario
+		if errors.Is(err, repo.ErrUserNotFound) {
+			logger.LogInfo(ctx, logger.LogEvent{
+				HTTPStatus: http.StatusNotFound,
+				Message:    "User not found",
+				Data:       gin.H{"id": userId},
+			})
+			c.JSON(http.StatusNotFound, domain.Response{
+				Status: http.StatusNotFound,
+				Data:   gin.H{"error": "User not found"},
+			})
+			return
+		}
+
+		// Handle other errors
 		logger.LogError(ctx, logger.LogEvent{
 			HTTPStatus: http.StatusInternalServerError,
 			Message:    "Failed to fetch user",
@@ -130,7 +148,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		}, err)
 		c.JSON(http.StatusInternalServerError, domain.Response{
 			Status: http.StatusInternalServerError,
-			Data:   gin.H{"error": err.Error()},
+			Data:   gin.H{"error": "Internal server error"},
 		})
 		return
 	}

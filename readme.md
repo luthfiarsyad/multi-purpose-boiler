@@ -11,6 +11,11 @@ This project is a multi-purpose boilerplate designed to jumpstart your Go develo
 - **Error Handling:** Includes robust error handling to gracefully manage unexpected situations.
 - **Go Version:** Built with Go 1.23.
 
+## cURL List
+
+- **GetUserByID:** curl -v -X GET http://localhost:8080/users/1
+- **Create User:** curl -X POST http://localhost:8080/users -H "Content-Type: application/json" -H "Authorization: Bearer your-token-here" -d '{"name": "John Doe", "email": "john.doe@example.com"}'
+
 ## Getting Started
 
 1.  **Clone the repository:**
