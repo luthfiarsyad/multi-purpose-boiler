@@ -8,7 +8,10 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func InitRouting() *gin.Engine {
+func InitRouting(ginMode string) *gin.Engine {
+	if ginMode == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	// Init Routing
 	r := gin.New()
 
@@ -23,6 +26,9 @@ func InitRouting() *gin.Engine {
 	// App Routes
 	r.POST("/users", h.CreateUser)
 	r.GET("/users/:id", h.GetUser)
+
+	// No Path Request
+	r.NoRoute(h.NotFoundHandler)
 
 	// return the routes
 	return r

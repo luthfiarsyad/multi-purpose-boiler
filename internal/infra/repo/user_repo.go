@@ -39,6 +39,7 @@ func (r *userRepo) CreateUser(ctx context.Context, user *domain.CreateUserReques
 			Message:    "Failed to create user",
 			Data:       user,
 			LogPoint:   "database-response",
+			IsBackend: true,
 		}, err)
 		return err
 	}
@@ -48,6 +49,7 @@ func (r *userRepo) CreateUser(ctx context.Context, user *domain.CreateUserReques
 		Message:    "User created successfully",
 		Data:       user,
 		LogPoint:   "database-response",
+		IsBackend: true,
 	})
 	return nil
 }
@@ -65,6 +67,7 @@ func (r *userRepo) GetUserByID(ctx context.Context, id uint) (*domain.GetUserRes
 				Message:    "User not found",
 				Data:       id,
 				LogPoint:   "database-response",
+				IsBackend: true,
 			})
 			return nil, ErrUserNotFound // Return custom error
 		}
@@ -74,6 +77,7 @@ func (r *userRepo) GetUserByID(ctx context.Context, id uint) (*domain.GetUserRes
 			Message:    "Failed to fetch user",
 			Data:       id,
 			LogPoint:   "database-response",
+			IsBackend: true,
 		}, err)
 		return nil, err
 	}
@@ -85,6 +89,7 @@ func (r *userRepo) GetUserByID(ctx context.Context, id uint) (*domain.GetUserRes
 			Message:    "User not found",
 			Data:       id,
 			LogPoint:   "database-response",
+			IsBackend: true,
 		})
 		return nil, ErrUserNotFound // Return custom error
 	}
@@ -94,6 +99,7 @@ func (r *userRepo) GetUserByID(ctx context.Context, id uint) (*domain.GetUserRes
 		Message:    "User fetched successfully",
 		Data:       user,
 		LogPoint:   "database-response",
+		IsBackend: true,
 	})
 
 	return &user, nil

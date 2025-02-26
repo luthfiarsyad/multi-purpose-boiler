@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"base-app/config"
 	"context"
 	"os"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// logKey defines keys for context values
 type logKey string
 
 const (
@@ -18,7 +20,7 @@ const (
 // Logger instance
 var Logger zerolog.Logger
 
-// Init initializes the logger with JSON format
+// Init initializes the logger with JSON format and sets log level
 func Init() {
 	Logger = zerolog.New(os.Stdout).
 		With().
@@ -26,7 +28,20 @@ func Init() {
 		Logger()
 
 	zerolog.TimeFieldFormat = "2006-01-02 15:04:05 MST"
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	// Set log level from config
+	switch config.AppConfig.LogLevel {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel) // Default to info
+	}
 }
 
 // LogEvent defines structured logging event
@@ -37,12 +52,16 @@ type LogEvent struct {
 	TransactionID string      `json:"transaction_id,omitempty"`
 	LogPoint      string      `json:"log_point,omitempty"`
 	Data          interface{} `json:"data,omitempty"`
+	IsBackend     bool        `json:"-"`
 }
 
 // LogInfo logs information messages using context
 func LogInfo(ctx context.Context, event LogEvent) {
-	transactionID, _ := ctx.Value(TransactionIDKey).(string)
+	if event.IsBackend {
+		return // Skip backend logs at Info level
+	}
 
+	transactionID, _ := ctx.Value(TransactionIDKey).(string)
 	startTime, _ := ctx.Value(StartTimeKey).(time.Time)
 	processTime := time.Since(startTime).Milliseconds()
 
@@ -54,10 +73,9 @@ func LogInfo(ctx context.Context, event LogEvent) {
 		Msg(event.Message)
 }
 
-// LogError logs error messages using context
+// LogError logs error messages using context (always logs regardless of IsBackend)
 func LogError(ctx context.Context, event LogEvent, err error) {
 	transactionID, _ := ctx.Value(TransactionIDKey).(string)
-
 	startTime, _ := ctx.Value(StartTimeKey).(time.Time)
 	processTime := time.Since(startTime).Milliseconds()
 
@@ -70,10 +88,10 @@ func LogError(ctx context.Context, event LogEvent, err error) {
 		Msg(event.Message)
 }
 
-// LogInfoNoCtx logs information messages without context (for main.go)
+// LogInfoNoCtx logs information messages without context
 func LogInfoNoCtx(event LogEvent) {
-	if event.TransactionID == "" {
-		event.TransactionID = "" // Ensure empty string if not provided
+	if event.IsBackend {
+		return // Skip backend logs at Info level
 	}
 
 	Logger.Info().
@@ -84,12 +102,8 @@ func LogInfoNoCtx(event LogEvent) {
 		Msg(event.Message)
 }
 
-// LogErrorNoCtx logs error messages without context (for main.go)
+// LogErrorNoCtx logs error messages without context (always logs regardless of IsBackend)
 func LogErrorNoCtx(event LogEvent, err error) {
-	if event.TransactionID == "" {
-		event.TransactionID = "" // Ensure empty string if not provided
-	}
-
 	Logger.Error().
 		Str("transaction_id", event.TransactionID).
 		Str("log_point", event.LogPoint).

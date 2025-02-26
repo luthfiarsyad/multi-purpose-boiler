@@ -5,9 +5,12 @@ import (
 	"base-app/internal/infra/repo"
 	"base-app/internal/service"
 	"base-app/pkg/db"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Handlers struct {
+	NotFoundHandler gin.HandlerFunc
 	*handler.UserHandler
 }
 
@@ -23,6 +26,10 @@ func InitWiring() Handlers {
 
 	// Initialize Handler
 	userHandler := handler.NewUserHandler(userService)
+	noRouteHandler := handler.NotFoundHandler()
 
-	return Handlers{UserHandler: userHandler}
+	return Handlers{
+		UserHandler:     userHandler,
+		NotFoundHandler: noRouteHandler,
+	}
 }

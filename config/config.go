@@ -7,6 +7,8 @@ import (
 )
 
 type Config struct {
+	LogLevel     string `mapstructure:"LOG_LEVEL"`
+	GinMode      string `mapstructure:"GIN_MODE"`
 	Port         string `mapstructure:"PORT"`
 	DatabaseURL  string `mapstructure:"DATABASE_URL"`
 	Environment  string `mapstructure:"ENV"`
