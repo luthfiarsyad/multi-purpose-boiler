@@ -4,6 +4,7 @@ import (
 	"base-app/internal/domain"
 	"base-app/pkg/logger"
 	"context"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -24,6 +25,9 @@ func NewUserRepo(db *gorm.DB) UserRepo {
 	return &userRepo{DB: db}
 }
 
+// Define user not found
+var ErrUserNotFound = errors.New("user not found")
+
 // CreateUser inserts a new user into the database using raw SQL.
 func (r *userRepo) CreateUser(ctx context.Context, user *domain.CreateUserRequest) error {
 	query := `INSERT INTO users (name, email) VALUES (?, ?)`
@@ -34,7 +38,7 @@ func (r *userRepo) CreateUser(ctx context.Context, user *domain.CreateUserReques
 			HTTPStatus: 500,
 			Message:    "Failed to create user",
 			Data:       user,
-                        LogPoint:   "database-response",
+			LogPoint:   "database-response",
 		}, err)
 		return err
 	}
@@ -55,20 +59,42 @@ func (r *userRepo) GetUserByID(ctx context.Context, id uint) (*domain.GetUserRes
 	err := r.DB.WithContext(ctx).Raw(query, id).Scan(&user).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.LogInfo(ctx, logger.LogEvent{
+				HTTPStatus: 404,
+				Message:    "User not found",
+				Data:       id,
+				LogPoint:   "database-response",
+			})
+			return nil, ErrUserNotFound // Return custom error
+		}
+
 		logger.LogError(ctx, logger.LogEvent{
 			HTTPStatus: 500,
 			Message:    "Failed to fetch user",
 			Data:       id,
-                        LogPoint:   "database-response",
+			LogPoint:   "database-response",
 		}, err)
 		return nil, err
+	}
+
+	// Check if the user data is still the zero value
+	if user.ID == 0 {
+		logger.LogInfo(ctx, logger.LogEvent{
+			HTTPStatus: 404,
+			Message:    "User not found",
+			Data:       id,
+			LogPoint:   "database-response",
+		})
+		return nil, ErrUserNotFound // Return custom error
 	}
 
 	logger.LogInfo(ctx, logger.LogEvent{
 		HTTPStatus: 200,
 		Message:    "User fetched successfully",
 		Data:       user,
-                LogPoint:   "database-response",
+		LogPoint:   "database-response",
 	})
+
 	return &user, nil
 }

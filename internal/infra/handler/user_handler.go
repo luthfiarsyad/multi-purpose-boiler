@@ -7,6 +7,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,8 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	if !ok {
 		transactionID = uuid.New().String()
 		ctx = context.WithValue(ctx, logger.TransactionIDKey, transactionID)
+	} else {
+		ctx = context.WithValue(ctx, logger.TransactionIDKey, transactionID)
 	}
 
 	// Set start time for process time calculation
@@ -49,8 +52,9 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 			Data:       req,
 		}, err)
 		c.JSON(http.StatusBadRequest, domain.Response{
-			Status: http.StatusBadRequest,
-			Data:   gin.H{"error": err.Error()},
+			Status:  http.StatusBadRequest,
+			Message: "Invalid Request Parameter",
+			Data:    gin.H{"error": err.Error()},
 		})
 		return
 	}
@@ -67,8 +71,9 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 			Data:       req,
 		}, err)
 		c.JSON(http.StatusInternalServerError, domain.Response{
-			Status: http.StatusInternalServerError,
-			Data:   gin.H{"error": err.Error()},
+			Status:  http.StatusInternalServerError,
+			Message: "Internal Server Error",
+			Data:    gin.H{"error": err.Error()},
 		})
 		return
 	}
@@ -80,8 +85,9 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusCreated, domain.Response{
-		Status: http.StatusCreated,
-		Data:   gin.H{"message": "User created", "user": user},
+		Status:  http.StatusCreated,
+		Message: "User Create Completed",
+		Data:    gin.H{"message": "User created", "user": user},
 	})
 }
 
@@ -93,6 +99,8 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	transactionID, ok := ctx.Value(logger.TransactionIDKey).(string)
 	if !ok {
 		transactionID = uuid.New().String()
+		ctx = context.WithValue(ctx, logger.TransactionIDKey, transactionID)
+	} else {
 		ctx = context.WithValue(ctx, logger.TransactionIDKey, transactionID)
 	}
 
@@ -115,22 +123,41 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 			Data:       gin.H{"id": id},
 		}, err)
 		c.JSON(http.StatusBadRequest, domain.Response{
-			Status: http.StatusBadRequest,
-			Data:   gin.H{"error": "Invalid user ID"},
+			Status:  http.StatusBadRequest,
+			Message: "Invalid Mandatory Parameter",
+			Data:    gin.H{"error": "Invalid user ID"},
 		})
 		return
 	}
 
+	// Call service layer
 	user, err := h.userService.GetUserByID(ctx, uint(userId))
 	if err != nil {
+		// Handle user not found scenario
+		if strings.ContainsAny(err.Error(), "not found") {
+			logger.LogInfo(ctx, logger.LogEvent{
+				HTTPStatus: http.StatusNotFound,
+				Message:    "User not found",
+				Data:       gin.H{"id": userId},
+			})
+			c.JSON(http.StatusNotFound, domain.Response{
+				Status:  http.StatusNotFound,
+				Message: "User Not Found",
+				Data:    gin.H{"error": "User not found"},
+			})
+			return
+		}
+
+		// Handle other errors
 		logger.LogError(ctx, logger.LogEvent{
 			HTTPStatus: http.StatusInternalServerError,
 			Message:    "Failed to fetch user",
 			Data:       gin.H{"id": userId},
 		}, err)
 		c.JSON(http.StatusInternalServerError, domain.Response{
-			Status: http.StatusInternalServerError,
-			Data:   gin.H{"error": err.Error()},
+			Status:  http.StatusInternalServerError,
+			Message: "Internal Server Error",
+			Data:    gin.H{"error": "Internal server error"},
 		})
 		return
 	}
@@ -142,7 +169,8 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, domain.Response{
-		Status: http.StatusOK,
-		Data:   user,
+		Status:  http.StatusOK,
+		Message: "Get User Completed",
+		Data:    user,
 	})
 }
