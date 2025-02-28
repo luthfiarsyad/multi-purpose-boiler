@@ -33,8 +33,9 @@ This project is a multi-purpose boilerplate designed to jumpstart your Go develo
 
 3.  **Run The App**
 
-        ```bash
-        go run cmd/main.go
+      ```bash
+      go run cmd/main.go
+      ```
 
     The application will be running on port 8080.
 
